@@ -5,13 +5,17 @@
 
 **Team:** Partner A — *Haneen Beshtawi* · Partner B — *Mehmed Said San*
 
-Between 1952 and 2007 the median country gained 27 years of life expectancy.
-This project uses the Gapminder panel (142 countries, 12 five-yearly snapshots) to ask
-**whether that gain tracked income** — and finds that it did, tightly, once income is
-measured on a log scale (r ≈ 0.81), but that the gap between Africa and every other
-continent widened rather than closed after 1990. Partner A built the cleaning pipeline
-in `src/clean_data.py`; Partner B wrote the analysis in `notebooks/EDA.ipynb`, which
-generates every table and figure in this README.
+Gapminder's country-year panel (142 countries, 12 five-yearly snapshots from 1952 to
+2007) is one of the most widely used teaching datasets in data science, but the raw
+export is not analysis-ready: it carries a meaningless index column, terse camelCase
+names, and no derived measures. This repository first turns that raw file into a
+documented, validated table (`data/processed/gapminder_clean.csv`, built by
+`src/clean_data.py`) and then asks **whether the 27-year gain in median life
+expectancy over those 55 years tracked income**. It did, tightly, once income is
+measured on a log scale (r ≈ 0.81), but the gap between Africa and every other
+continent widened rather than closed after 1990. Partner A owns the cleaning pipeline;
+Partner B owns the analysis in `notebooks/EDA.ipynb`, which generates every table and
+figure in this README.
 
 ---
 
@@ -43,6 +47,28 @@ generates every table and figure in this README.
 |---|---|---|
 | `gdp_total_bn` | billions of international \$ | `population × gdp_per_capita ÷ 1e9` |
 | `log_gdp_per_capita` | log₁₀(international \$) | Log income — the scale on which the income/longevity relationship is linear |
+
+### Data Cleaning (Partner A)
+
+The pipeline is `src/clean_data.py`; run `python src/clean_data.py` from the
+repository root. Each step prints what it checked and what it changed.
+
+| Step | What it does | Result on this extract |
+|---|---|---|
+| 1. Drop export index | Removes the unnamed row-number column written by the R `write.csv` export | 7 columns → 6 |
+| 2. Rename variables | `lifeExp` → `life_expectancy`, `pop` → `population`, `gdpPercap` → `gdp_per_capita` (snake_case throughout) | 6 descriptive names |
+| 3. Enforce dtypes | `year` int16, `population` int64, `life_expectancy` and `gdp_per_capita` float64, `country` string (whitespace stripped), `continent` category | no silent type coercion downstream |
+| 4. Missing values | Counts NA per column; drops any row missing a key variable | 0 missing, 0 rows dropped |
+| 5. Integrity checks | Drops duplicate (`country`, `year`) keys; drops rows with non-positive life expectancy, GDP or population; confirms every country has all 12 years | 0 duplicates, 0 invalid, balanced panel |
+| 6. Derived variables | `gdp_total_bn = population × gdp_per_capita / 1e9`; `log_gdp_per_capita = log10(gdp_per_capita)` | 6 columns → 8 |
+| 7. Sort and write | Sorts by `country`, `year` and writes `data/processed/gapminder_clean.csv` | 1,704 rows × 8 columns, 142 countries, 1952–2007 |
+
+The checks in steps 4 and 5 all pass with nothing removed, so the cleaned file has
+the same 1,704 country-years as the raw one. They are kept in the pipeline so the
+result is verified rather than assumed.
+
+**Tools:** pandas 3.0 (reading, renaming, grouping, writing), numpy (log transform),
+pathlib (paths relative to the repository root).
 
 ---
 
