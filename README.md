@@ -48,6 +48,10 @@ figure in this README.
 | `gdp_total_bn` | billions of international \$ | `population × gdp_per_capita ÷ 1e9` |
 | `log_gdp_per_capita` | log₁₀(international \$) | Log income — the scale on which the income/longevity relationship is linear |
 
+---
+
+## Methods
+
 ### Data Cleaning (Partner A)
 
 The pipeline is `src/clean_data.py`; run `python src/clean_data.py` from the
@@ -69,10 +73,6 @@ result is verified rather than assumed.
 
 **Tools:** pandas 3.0 (reading, renaming, grouping, writing), numpy (log transform),
 pathlib (paths relative to the repository root).
-
----
-
-## Methods
 
 ### Exploratory Data Analysis (Partner B)
 
@@ -148,3 +148,29 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/EDA.ipynb   # or o
 ```
 
 The notebook writes the three PNGs to `figures/`. Tested with Python 3.11, pandas 3.0, matplotlib 3.11.
+
+## Merge Conflict Reflection
+
+**What conflicted.** Both partners edited the README introduction on their own branches,
+deliberately and without coordinating the wording. Partner A's version (PR #1) framed the
+project around the cleaning pipeline: the raw export's index column, camelCase names and
+missing derived measures. Partner B's version (PR #2) framed it around the result: the
+27-year gain in median life expectancy and the r ≈ 0.81 correlation with log income.
+PR #1 was merged first; when `main` was then merged into `partner-b-eda`, Git could not
+reconcile the two paragraphs and stopped with `<<<<<<< HEAD` / `=======` / `>>>>>>>`
+markers around them in `README.md`. Every other change merged automatically, including
+Partner A's Data Cleaning section and Partner B's EDA and Results sections, because they
+touched different parts of the file.
+
+**How we resolved it.** We did not pick one side. We read both paragraphs, kept Partner A's
+description of what the raw data lacks and what the pipeline produces, and folded in
+Partner B's headline finding and the pointer to the notebook, so the intro now describes
+both the data work and the answer. We removed the markers, checked the file rendered,
+and committed the merge (`git add README.md && git commit`). The resolved branch was
+pushed so PR #2 became mergeable on GitHub.
+
+**What we learned.** A conflict is Git asking a human to make an editorial decision, not
+an error. Merging the first PR promptly and rebasing or merging `main` into the second
+branch locally, where the full file and a real editor are available, was easier than
+GitHub's web conflict editor. We also learned to keep the rest of our edits in separate
+sections so that the intended conflict stayed small and easy to reason about.
